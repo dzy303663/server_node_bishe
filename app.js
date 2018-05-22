@@ -19,6 +19,7 @@ app.all('*', function (req, res, next) {
 // view engine setup
 app.use(express.static('./'));
 app.use(express.static(__dirname + './data'));
+app.use(express.static(__dirname + './data/HLS-demo-master'));
 console.log(__dirname);
 // app.use(logger('dev'));
 // app.use(express.json());
