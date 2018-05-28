@@ -15,6 +15,7 @@ app.all('*', function (req, res, next) {
     // if (req.method == "OPTIONS") res.send(200);/*让options请求快速返回*/
     // else 
     next();
+    
 });
 // view engine setup
 app.use(express.static('./'));
@@ -56,8 +57,46 @@ mongoose.connect('mongodb://localhost:27017/user', function (err) {
 });  
 
 var port = process.env.PORT || 5200; // 设置端口号：3000
-app.listen(port); // 监听 port[3000]端口
+var server = app.listen(port); // 监听 port[3000]端口
 console.log('node_server start on port' + port);
+
+var io = require('socket.io')(server);
+
+var users = {}
+var Message = require('./models/message.js')
+
+io.on('connection', function (socket) {
+    console.log("有用户连接")
+    //监听用户发布聊天内容
+    socket.on('message', function (obj) {
+        //向所有客户端广播发布的消息
+        console.log(obj)
+        io.emit('message', obj)
+        var mess = {
+            username: obj.username,
+            msg: obj.msg,
+            name: obj.name
+        }
+        var message = new Message(mess)
+        message.save(function (err, mess) {
+            if (err) {
+                console.log(err)
+            }
+            console.log(mess)
+        })
+        console.log(obj.name + '说：' + obj.msg)
+    })
+
+    socket.on('disconnect', function () {
+        delete users[socket.name]
+        //用户监听用退出聊天室
+        io.emit('logout', users)
+    })
+})
+
+
+
+
 
 const user = require('./models/user.js'); // 载入mongoose编译后的模型user
 const control = require('./models/control.js');// 载入mongoose编译后的模型user
@@ -72,7 +111,8 @@ app.post('/login', function (req, res) {
         }else{
             if (req.query.pwd == doc.pw) {
                 console.log("密码正确");
-                res.end("success");
+                res.json({'state':'success','name':doc.name});
+              //  res.end("success");
             } else {
                 console.log("密码错误");
                 res.end("failed");
