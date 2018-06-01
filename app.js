@@ -64,6 +64,7 @@ var io = require('socket.io')(server);
 
 var users = {}
 var Message = require('./models/message.js')
+var HomeWork = require('./models/homework.js')
 
 io.on('connection', function (socket) {
     console.log("有用户连接")
@@ -85,6 +86,22 @@ io.on('connection', function (socket) {
             console.log(mess)
         })
         console.log(obj.name + '说：' + obj.msg)
+    })
+
+    socket.on('homework', function(obj){
+        var mess = {
+            creatUser: obj.user,
+            title: obj.title,
+            content: obj.content,
+            class: obj.class
+        }
+        var homework = new HomeWork(mess);
+        homework.save(function(err, mess){
+            if(err){
+                console.log(err)
+            }
+            console.log('增加问题成功',mess);
+        })
     })
 
     socket.on('disconnect', function () {
